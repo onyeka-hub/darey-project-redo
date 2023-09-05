@@ -1,2 +1,106 @@
 # Lamp Stack Implementation
-## Installing Apache and updating the firewall
+
+## Step 1 - Installing Apache and updating the firewall
+
+### update a list of packages in package manager
+
+`sudo apt update`
+
+### Run apache2 package installation
+`sudo apt install apache2`
+
+To verify that apache2 is running as a Service in our OS, use following command
+
+`sudo systemctl status apache2`
+
+![apache2 status](./images/1-apache2-status.PNG)
+
+Apache landing page on terminal and the browser
+
+![apache page](./images/1-apache2-page.PNG)
+
+
+## Step 2 — Installing MySQL
+
+Again, use 'apt' to acquire and install this software:
+
+`sudo apt install mysql-server`
+
+Connect as root with `sudo mysql`
+
+To run the security script that comes preinstalled with mysql update the root password with 
+
+`ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'PassWord.1';`
+
+Exit and run the script with the below command
+
+`sudo mysql_secure_installation`
+
+## Step 3 — Creating a Virtual Host for your Website using Apache
+
+Apache on Ubuntu 20.04 has one server block enabled by default that is configured to serve documents from the /var/www/html directory. We will leave this configuration as it is and will add our own directory next next to the default one.
+
+Create the directory for projectlamp using 'mkdir' command as follows:
+
+`sudo mkdir /var/www/projectlamp`
+
+Next, assign ownership of the directory with the $USER environment variable, which will reference your current system user:
+
+`sudo chown -R $USER:$USER /var/www/projectlamp`
+
+Then, create and open a new configuration file in Apache’s sites-available directory
+
+`sudo vi /etc/apache2/sites-available/projectlamp.conf`
+
+Paste in the following bare-bones configuration
+
+```
+<VirtualHost *:80>
+    ServerName projectlamp
+    ServerAlias www.projectlamp 
+    ServerAdmin webmaster@localhost
+    DocumentRoot /var/www/projectlamp
+    ErrorLog ${APACHE_LOG_DIR}/error.log
+    CustomLog ${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
+```
+
+Disable Apache’s default website with `sudo a2dissite 000-default`
+
+Enable the new virtual host: `sudo a2ensite projectlamp`
+
+To make sure your configuration file doesn’t contain syntax errors, run:
+
+`sudo apache2ctl configtest`
+
+Finally, reload Apache so these changes take effect:
+
+`sudo systemctl reload apache2`
+
+Your new website is now active, but the web root /var/www/projectlamp is still empty. Create an index.html file in that location so that we can test that the virtual host works as expected:
+```
+sudo echo 'Hello LAMP from hostname' $(curl -s http://169.254.169.254/latest/meta-data/public-hostname) 'with public IP' $(curl -s http://169.254.169.254/latest/meta-data/public-ipv4) > /var/www/projectlamp/index.html
+```
+Checking from the webserver using `curl http://localhost:80`
+
+![curl public ipv4](./images/1-curl-projectlamp.PNG)
+
+Now go to your browser and try to open your website URL using IP address:
+
+![curl public ipv4](./images/1-curl-public-ipv4.PNG)
+
+## Step 4 — Enable PHP on the website
+
+Edit the /etc/apache2/mods-enabled/dir.conf file and change the order in which the index.php file is listed within the DirectoryIndex directive
+
+Create a new file named index.php inside your custom web root folder:
+
+`vim /var/www/projectlamp/index.php`
+
+Add the following text, which is valid PHP code, inside the file:
+```
+<?php
+phpinfo();
+```
+
+![php page](./images/1-php-page.PNG)
